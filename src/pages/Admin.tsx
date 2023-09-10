@@ -18,7 +18,6 @@ import {
   Table,
   Thead,
   Tbody,
-  Tfoot,
   Tr,
   Th,
   Td,
@@ -58,7 +57,7 @@ function AdminFallback() {
 }
 
 function AdminContent() {
-  const queryClient = useQueryClient();
+  // const queryClient = useQueryClient();
   const [order, setOrder] = useState<"asc" | "desc">("asc");
   const [loading, setLoading] = useState(false);
   // const [startDate, setStartDate] = useState<string>("");
@@ -113,11 +112,12 @@ function AdminContent() {
               <MenuList minWidth="240px">
                 <MenuOptionGroup
                   defaultValue="asc"
-                  title="Order"
+                  title="렌털시작일"
                   type="radio"
                   onChange={(value) => {
                     setOrder(value as "asc" | "desc");
-                    queryClient.refetchQueries(["/admin"]);
+                    // queryClient.refetchQueries(["/admin"]);
+                    result.refetch();
                   }}
                 >
                   <MenuItemOption value="asc">오름차순</MenuItemOption>
