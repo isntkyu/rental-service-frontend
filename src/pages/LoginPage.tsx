@@ -8,6 +8,28 @@ import { InputLabel } from "../components/InputLabel";
 import { useRouter } from "next/router";
 
 type LoginType = "general" | "business" | "admin";
+type UserType = "ADMIN" | "GENERAL" | "BUSINESS";
+interface Res {
+  body: {
+    code?: string;
+    userId: number;
+    userType: UserType;
+  };
+}
+
+async function fakeApi(id: string, password: string, loginType: LoginType) {
+  console.log({ id, password, loginType });
+  return new Promise<Res>((resolve) => {
+    setTimeout(() => {
+      resolve({
+        body: {
+          userType: "ADMIN",
+          userId: 1,
+        },
+      });
+    }, 1000);
+  });
+}
 
 export default function LoginPage() {
   const [id, setId] = useState<string>("");
@@ -20,10 +42,29 @@ export default function LoginPage() {
 
   const handleSubmit = async () => {
     setLoading(true);
-    // TODO API
+    // TODO API Login
+    const res: Res = await fakeApi(id, password, loginType);
     await delay(500);
     setLoading(false);
-    router.push("/my-page/:userId");
+
+    if (res.body.code != null) {
+      if (res.body?.code === "Fail") {
+        alert("아이디/패스워드를 확인해주세요.");
+      } else if (res.body?.code === "NotFound") {
+        alert("존재하지 않는 회원입니다.");
+      } else {
+        alert("로그인 실패");
+      }
+    }
+
+    const userId = res.body.userId;
+    const userType = res.body.userType;
+
+    if (userType === "ADMIN") {
+      router.push(`/admin/${userId}`);
+    } else if (userType === "BUSINESS") {
+    } else if (userType === "GENERAL") {
+    }
   };
 
   return (
