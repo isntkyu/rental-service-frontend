@@ -5,6 +5,7 @@ import { Radio, RadioGroup, Button } from "@chakra-ui/react";
 import { ComponentProps, useCallback, useState } from "react";
 import { FixedBottom } from "../components/FixedBottom";
 import { InputLabel } from "../components/InputLabel";
+import { useRouter } from "next/router";
 
 type LoginType = "general" | "business" | "admin";
 
@@ -13,6 +14,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState<string>("");
   const [loginType, setLoginType] = useState<LoginType>("general");
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const canSubmit = id.length > 0 && password.length > 0 && !loading;
 
@@ -21,6 +23,7 @@ export default function LoginPage() {
     // TODO API
     await delay(500);
     setLoading(false);
+    router.push("/my-page/:userId");
   };
 
   return (
