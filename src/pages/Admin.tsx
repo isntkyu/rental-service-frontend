@@ -15,24 +15,29 @@ import {
   MenuOptionGroup,
   MenuItemOption,
   Input,
+  Table,
+  Thead,
+  Tbody,
+  Tfoot,
+  Tr,
+  Th,
+  Td,
+  TableCaption,
+  TableContainer,
+  Center,
 } from "@chakra-ui/react";
 import { Spacing, Stack } from "@toss/emotion-utils";
 import { Suspense, useEffect, useState } from "react";
 import { QueryClient, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/router";
 import { FixedBottom } from "../components/FixedBottom";
+import { format } from "date-fns";
 
-async function fakeApi(
-  order: "asc" | "desc",
-  startDate: string,
-  endDate: string
-) {
+async function fakeApi(order: "asc" | "desc", month: string) {
   return new Promise<string[]>((resolve) => {
     setTimeout(() => {
       if (order === "asc") {
         resolve(["1", "2", "3", "4"]);
-      } else if (startDate === "") {
-        resolve(["", "2"]);
       } else {
         resolve(["4", "3", "2", "1"]);
       }
@@ -49,7 +54,6 @@ export default function Admin() {
 }
 
 function AdminFallback() {
-  console.log("fallback");
   return <Spinner />;
 }
 
@@ -57,18 +61,22 @@ function AdminContent() {
   const queryClient = useQueryClient();
   const [order, setOrder] = useState<"asc" | "desc">("asc");
   const [loading, setLoading] = useState(false);
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
+  // const [startDate, setStartDate] = useState<string>("");
+  // const [endDate, setEndDate] = useState<string>("");
+  const [month, setMonth] = useState<string>(format(new Date(), "yyyy-MM"));
   // const router = useRouter();
   const result = useQuery(
-    ["/admin", order, startDate, endDate],
-    () => fakeApi(order, startDate, endDate),
+    ["/admin", order, month],
+    () => fakeApi(order, month),
     {
       suspense: true,
     }
   );
 
-  const toast = useToast();
+  const toast = useToast({
+    position: "top",
+  });
+
   const handleSubmit = () => {
     setLoading(true);
     setTimeout(() => {
@@ -83,7 +91,10 @@ function AdminContent() {
     }, 2000);
   };
 
-  console.log({ startDate, endDate });
+  const pickMonth = (month: string) => {
+    const monthString = month.split("-")[1];
+    return Number(monthString).toString();
+  };
 
   return (
     <div>
@@ -94,38 +105,41 @@ function AdminContent() {
 
       <Stack>
         <div>
-          <Menu closeOnSelect={false}>
-            <MenuButton as={Button} colorScheme="blue">
-              정렬
-            </MenuButton>
-            <MenuList minWidth="240px">
-              <MenuOptionGroup
-                defaultValue="asc"
-                title="Order"
-                type="radio"
-                onChange={(value) => {
-                  setOrder(value as "asc" | "desc");
-                  queryClient.refetchQueries(["/admin"]);
-                }}
-              >
-                <MenuItemOption value="asc">오름차순</MenuItemOption>
-                <MenuItemOption value="desc">내림차순</MenuItemOption>
-              </MenuOptionGroup>
-            </MenuList>
-          </Menu>
+          <Stack.Horizontal>
+            <Menu closeOnSelect={false}>
+              <MenuButton as={Button} colorScheme="blue">
+                정렬
+              </MenuButton>
+              <MenuList minWidth="240px">
+                <MenuOptionGroup
+                  defaultValue="asc"
+                  title="Order"
+                  type="radio"
+                  onChange={(value) => {
+                    setOrder(value as "asc" | "desc");
+                    queryClient.refetchQueries(["/admin"]);
+                  }}
+                >
+                  <MenuItemOption value="asc">오름차순</MenuItemOption>
+                  <MenuItemOption value="desc">내림차순</MenuItemOption>
+                </MenuOptionGroup>
+              </MenuList>
+            </Menu>
+            <Input
+              width={40}
+              type="month"
+              value={month}
+              onChange={(e) => {
+                setMonth(e.target.value);
+                result.refetch();
+              }}
+            />
+          </Stack.Horizontal>
         </div>
       </Stack>
       <Spacing size={20} />
       <Stack.Horizontal>
-        <Input
-          type="date"
-          value={startDate}
-          onChange={(e) => {
-            setStartDate(e.target.value);
-            result.refetch();
-          }}
-        />
-        <Text>~</Text>
+        {/* <Text>~</Text>
         <Input
           type="date"
           value={endDate}
@@ -133,14 +147,44 @@ function AdminContent() {
             setEndDate(e.target.value);
             result.refetch();
           }}
-        />
+        /> */}
       </Stack.Horizontal>
       <Spacing size={20} />
-      <OrderedList>
+
+      <Heading>{pickMonth(month)}월 렌털 내역</Heading>
+      <Spacing size={20} />
+
+      {/* <OrderedList>
         {result.data?.map((x) => (
           <ListItem key={x}>{x}</ListItem>
         ))}
-      </OrderedList>
+      </OrderedList> */}
+      <TableContainer>
+        <Table variant="simple" size="sm">
+          {/* <TableCaption>Imperial to metric conversion factors</TableCaption> */}
+          <Thead>
+            <Tr>
+              <Th>사용자</Th>
+              <Th>렌털 기간</Th>
+              <Th>제품명</Th>
+            </Tr>
+          </Thead>
+          <Tbody>
+            {result.data?.map((x) => (
+              <Tr>
+                <Td>a</Td>
+                <Td>a</Td>
+                <Td>a</Td>
+              </Tr>
+            ))}
+          </Tbody>
+        </Table>
+      </TableContainer>
+
+      <Spacing size={50} />
+      <Heading size="md" textAlign="center">
+        {pickMonth(month)}월 총 렌털 비용: ${0}
+      </Heading>
 
       <FixedBottom>
         <Button
