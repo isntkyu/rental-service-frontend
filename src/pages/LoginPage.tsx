@@ -1,4 +1,11 @@
-import { Heading, Input, Text, FormControl, FormLabel } from "@chakra-ui/react";
+import {
+  Heading,
+  Input,
+  Text,
+  FormControl,
+  FormLabel,
+  useToast,
+} from "@chakra-ui/react";
 import { Spacing, Stack } from "@toss/emotion-utils";
 import { delay } from "@toss/utils";
 import { Radio, RadioGroup, Button } from "@chakra-ui/react";
@@ -8,7 +15,8 @@ import { InputLabel } from "../components/InputLabel";
 import { useRouter } from "next/router";
 
 type LoginType = "general" | "business" | "admin";
-type UserType = "ADMIN" | "GENERAL" | "BUSINESS";
+export type UserType = "ADMIN" | "GENERAL" | "BUSINESS";
+
 interface Res {
   body: {
     code?: string;
@@ -18,12 +26,11 @@ interface Res {
 }
 
 async function fakeApi(id: string, password: string, loginType: LoginType) {
-  console.log({ id, password, loginType });
   return new Promise<Res>((resolve) => {
     setTimeout(() => {
       resolve({
         body: {
-          userType: "ADMIN",
+          userType: "BUSINESS",
           userId: 1,
         },
       });
@@ -38,6 +45,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  const toast = useToast({
+    position: "top",
+  });
+
   const canSubmit = id.length > 0 && password.length > 0 && !loading;
 
   const handleSubmit = async () => {
@@ -49,21 +60,41 @@ export default function LoginPage() {
 
     if (res.body.code != null) {
       if (res.body?.code === "Fail") {
-        alert("아이디/패스워드를 확인해주세요.");
+        toast({
+          title: "아이디/패스워드를 확인해주세요.",
+          description: "",
+          status: "error",
+          duration: 9000,
+          isClosable: true,
+        });
       } else if (res.body?.code === "NotFound") {
-        alert("존재하지 않는 회원입니다.");
+        toast({
+          title: "존재하지 않는 회원입니다.",
+          description: "",
+          status: "error",
+          duration: 9000,
+          isClosable: true,
+        });
       } else {
-        alert("로그인 실패");
+        toast({
+          title: "서버 에러",
+          description: "",
+          status: "error",
+          duration: 9000,
+          isClosable: true,
+        });
       }
-    }
+    } else {
+      const userId = res.body.userId;
+      const userType = res.body.userType;
 
-    const userId = res.body.userId;
-    const userType = res.body.userType;
-
-    if (userType === "ADMIN") {
-      router.push(`/admin/${userId}`);
-    } else if (userType === "BUSINESS") {
-    } else if (userType === "GENERAL") {
+      if (userType === "ADMIN") {
+        router.push(`/admin/${userId}`);
+      } else if (userType === "BUSINESS") {
+        router.push(`/business/${userId}`);
+      } else if (userType === "GENERAL") {
+        router.push(`/my-page/${userId}`);
+      }
     }
   };
 
@@ -106,7 +137,7 @@ export default function LoginPage() {
               onChange={(e) => {
                 setPassword(e.target.value);
               }}
-              placeholder="*****"
+              placeholder="******"
               type="password"
             />
           </Stack.Horizontal>
