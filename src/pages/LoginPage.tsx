@@ -30,7 +30,7 @@ async function fakeApi(id: string, password: string, loginType: LoginType) {
     setTimeout(() => {
       resolve({
         body: {
-          userType: "BUSINESS",
+          userType: "GENERAL",
           userId: 1,
         },
       });

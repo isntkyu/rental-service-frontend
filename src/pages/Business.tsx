@@ -31,6 +31,7 @@ async function fakeApi(userType: UserType, userId: number) {
         businessName: "우철이 렌탈소",
         rentalList: [
           {
+            rentalId: 1,
             email: "123@.a2",
             startDate: "2000.12.12", // todo Date formatting
             endDate: "2222.12.12", // Date
@@ -120,8 +121,8 @@ function BusinessContent() {
             </Tr>
           </Thead>
           <Tbody>
-            {result.data.rentalList.map((x) => (
-              <Tr>
+            {result.data.rentalList.map((item: any) => (
+              <Tr key={item.rentalId}>
                 <Td>a</Td>
                 <Td>a</Td>
                 <Td>a</Td>
