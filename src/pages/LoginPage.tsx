@@ -14,7 +14,6 @@ import { FixedBottom } from "../components/FixedBottom";
 import { InputLabel } from "../components/InputLabel";
 import { useRouter } from "next/router";
 
-type LoginType = "general" | "business" | "admin";
 export type UserType = "ADMIN" | "GENERAL" | "BUSINESS";
 
 interface Res {
@@ -25,12 +24,12 @@ interface Res {
   };
 }
 
-async function fakeApi(id: string, password: string, loginType: LoginType) {
+async function fakeApi(id: string, password: string, userType: UserType) {
   return new Promise<Res>((resolve) => {
     setTimeout(() => {
       resolve({
         body: {
-          userType: "GENERAL",
+          userType: userType,
           userId: 1,
         },
       });
@@ -41,7 +40,7 @@ async function fakeApi(id: string, password: string, loginType: LoginType) {
 export default function LoginPage() {
   const [id, setId] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const [loginType, setLoginType] = useState<LoginType>("general");
+  const [userType, setUserType] = useState<UserType>("GENERAL");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -54,7 +53,7 @@ export default function LoginPage() {
   const handleSubmit = async () => {
     setLoading(true);
     // TODO API Login
-    const res: Res = await fakeApi(id, password, loginType);
+    const res: Res = await fakeApi(id, password, userType);
     await delay(500);
     setLoading(false);
 
@@ -94,6 +93,14 @@ export default function LoginPage() {
         router.push(`/business/${userId}`);
       } else if (userType === "GENERAL") {
         router.push(`/my-page/${userId}`);
+      } else {
+        toast({
+          title: "존재하지 않는 회원입니다.",
+          description: "",
+          status: "error",
+          duration: 9000,
+          isClosable: true,
+        });
       }
     }
   };
@@ -106,15 +113,15 @@ export default function LoginPage() {
       <FormControl>
         <FormLabel>분류</FormLabel>
         <RadioGroup
-          onChange={(value: LoginType) => {
-            setLoginType(value);
+          onChange={(value: UserType) => {
+            setUserType(value);
           }}
-          value={loginType}
+          value={userType}
         >
           <Stack.Horizontal>
-            <Radio value="general">사용자</Radio>
-            <Radio value="business">사업자</Radio>
-            <Radio value="admin">관리자</Radio>
+            <Radio value="GENERAL">사용자</Radio>
+            <Radio value="BUSINESS">사업자</Radio>
+            <Radio value="ADMIN">관리자</Radio>
           </Stack.Horizontal>
         </RadioGroup>
 

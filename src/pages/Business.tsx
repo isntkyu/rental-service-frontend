@@ -95,13 +95,13 @@ function BusinessContent() {
       <Spacing size={20} />
       <Stack>
         <Stack.Horizontal>
-          <FormLabel style={{ minWidth: "50px" }}>아이디</FormLabel>
-          <Input value={result.data.email} isDisabled={true} />
+          <FormLabel style={{ minWidth: "70px" }}>아이디</FormLabel>
+          <Text fontSize={20}>{result.data.email}</Text>
         </Stack.Horizontal>
 
         <Stack.Horizontal>
           <FormLabel style={{ minWidth: "50px" }}>사업자 코드</FormLabel>
-          <Input value={result.data.businessCode} isDisabled={true} />
+          <Text fontSize={20}>{result.data.businessCode}</Text>
         </Stack.Horizontal>
       </Stack>
 

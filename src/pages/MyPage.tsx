@@ -7,6 +7,7 @@ import {
   Spinner,
   Checkbox,
   Text,
+  useToast,
 } from "@chakra-ui/react";
 import { useQuery } from "@tanstack/react-query";
 import { Spacing, Stack } from "@toss/emotion-utils";
@@ -21,11 +22,16 @@ async function fakeApi(id: number) {
         userId: 1,
         email: "zz@zz",
         name: "이준규",
-        // rentalInfo: null,
-        rentalInfo: {
-          rentalId: 1,
-          status: "RETURN",
-        },
+        rentalInfo: null,
+        // rentalInfo: {
+        //   rentalId: 1,
+        //   status: "RENTAL",
+        //   serialNumber: "ABCD_EFBS",
+        //   businessCode: "01234",
+        //   rentalDate: "2023-01-01",
+        //   // returnDate: "2023-01-05",
+        //   // price: 100,
+        // },
       });
     }, 1000);
   });
@@ -44,16 +50,21 @@ function MyPageFallback() {
 }
 
 function MyPageContent() {
+  const toast = useToast({
+    position: "top",
+  });
+
   const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [isPayAgree, setIsPayAgree] = useState(false);
   const router = useRouter();
-  console.log(router.query.id);
   /*
   상태: 렌탈있음 | 반납하고 결제전 | 렌탈 없음
   
   */
-  const pushRentalPage = () => {};
+  const pushRentalPage = () => {
+    localStorage.setItem("userId", String(router.query.id));
+  };
 
   const result = useQuery(
     ["/my-page", "router.query.id"],
@@ -62,6 +73,29 @@ function MyPageContent() {
       suspense: true,
     }
   );
+
+  const handlePayment = () => {
+    setLoading(true);
+    setTimeout(() => {
+      toast({
+        title: "결제가 완료되었습니다.",
+        description: "",
+        status: "success",
+        duration: 9000,
+        isClosable: true,
+      });
+      setLoading(false);
+    }, 1000);
+  };
+
+  const handleReturn = () => {
+    setLoading(true);
+    setTimeout(() => {
+      // TODO 반납 API 호출
+      result.refetch();
+      setLoading(false);
+    }, 1000);
+  };
 
   return (
     <div>
@@ -72,8 +106,9 @@ function MyPageContent() {
 
       <Stack>
         <Stack.Horizontal>
-          <FormLabel style={{ minWidth: "50px" }}>아이디</FormLabel>
-          <Input value={result.data.email} isDisabled={true} />
+          <FormLabel style={{ minWidth: "66px" }}>아이디</FormLabel>
+          {/* <Input value={result.data.email} isDisabled={true} /> */}
+          <Text fontSize={20}>{result.data.email}</Text>
         </Stack.Horizontal>
 
         <Stack.Horizontal>
@@ -91,7 +126,7 @@ function MyPageContent() {
 
       <Spacing size={40} />
       <Heading size="sm">렌털정보</Heading>
-      <Spacing size={20} />
+      <Spacing size={30} />
 
       {result.data.rentalInfo === null ? (
         <div>
@@ -112,19 +147,90 @@ function MyPageContent() {
         </div>
       ) : result.data.rentalInfo.status === "RETURN" ? (
         <div>
-          <Text>aa</Text>
+          <Stack.Horizontal>
+            <FormLabel style={{ minWidth: "66px" }}>시리얼번호</FormLabel>
+            {/* <Input value={result.data.email} isDisabled={true} /> */}
+            <Text fontSize={20}>{result.data.rentalInfo.serialNumber}</Text>
+          </Stack.Horizontal>
+          <Spacing size={10} />
+          <Stack.Horizontal>
+            <FormLabel style={{ minWidth: "66px" }}>사업자코드</FormLabel>
+            {/* <Input value={result.data.email} isDisabled={true} /> */}
+            <Text fontSize={20}>{result.data.rentalInfo.businessCode}</Text>
+          </Stack.Horizontal>
+          <Spacing size={10} />
+          <Stack.Horizontal>
+            <FormLabel style={{ minWidth: "66px" }}>렌털시작일</FormLabel>
+            {/* <Input value={result.data.email} isDisabled={true} /> */}
+            <Text fontSize={20}>{result.data.rentalInfo.rentalDate}</Text>
+          </Stack.Horizontal>
+          <Spacing size={10} />
+          <Stack.Horizontal>
+            <FormLabel style={{ minWidth: "66px" }}>렌털반납일</FormLabel>
+            {/* <Input value={result.data.email} isDisabled={true} /> */}
+            <Text fontSize={20}>{result.data.rentalInfo.returnDate}</Text>
+          </Stack.Horizontal>
+          <Spacing size={10} />
+          <Stack.Horizontal>
+            <FormLabel style={{ minWidth: "66px" }}>최종결제금</FormLabel>
+            {/* <Input value={result.data.email} isDisabled={true} /> */}
+            <Text fontSize={20}>${result.data.rentalInfo.price}</Text>
+          </Stack.Horizontal>
+          <Spacing size={50} />
           <Checkbox
             colorScheme="blue"
-            isChecked={!isPayAgree}
+            isChecked={isPayAgree}
+            size="sm"
             onChange={() => {
               setIsPayAgree(!isPayAgree);
             }}
           >
             위 결제 내용을 확인하였습니다.
           </Checkbox>
+
+          <FixedBottom>
+            <Button
+              isLoading={loading}
+              colorScheme="blue"
+              onClick={handlePayment}
+              style={{ width: "100%" }}
+              size="lg"
+            >
+              결제하기
+            </Button>
+          </FixedBottom>
         </div>
       ) : (
-        <Text>bb</Text>
+        <div>
+          <Stack.Horizontal>
+            <FormLabel style={{ minWidth: "66px" }}>시리얼번호</FormLabel>
+            {/* <Input value={result.data.email} isDisabled={true} /> */}
+            <Text fontSize={20}>{result.data.rentalInfo.serialNumber}</Text>
+          </Stack.Horizontal>
+          <Spacing size={10} />
+          <Stack.Horizontal>
+            <FormLabel style={{ minWidth: "66px" }}>사업자코드</FormLabel>
+            {/* <Input value={result.data.email} isDisabled={true} /> */}
+            <Text fontSize={20}>{result.data.rentalInfo.businessCode}</Text>
+          </Stack.Horizontal>
+          <Spacing size={10} />
+          <Stack.Horizontal>
+            <FormLabel style={{ minWidth: "66px" }}>렌털시작일</FormLabel>
+            {/* <Input value={result.data.email} isDisabled={true} /> */}
+            <Text fontSize={20}>{result.data.rentalInfo.rentalDate}</Text>
+          </Stack.Horizontal>
+          <FixedBottom>
+            <Button
+              isLoading={loading}
+              colorScheme="blue"
+              onClick={handleReturn}
+              style={{ width: "100%" }}
+              size="lg"
+            >
+              반납하기
+            </Button>
+          </FixedBottom>
+        </div>
       )}
     </div>
   );
