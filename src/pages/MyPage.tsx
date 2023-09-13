@@ -14,6 +14,7 @@ import { Spacing, Stack } from "@toss/emotion-utils";
 import { useRouter } from "next/router";
 import { Suspense, useState } from "react";
 import { FixedBottom } from "../components/FixedBottom";
+import { resourceLimits } from "worker_threads";
 
 async function fakeApi(id: number) {
   return new Promise<any>((resolve) => {
@@ -64,6 +65,7 @@ function MyPageContent() {
   */
   const pushRentalPage = () => {
     localStorage.setItem("userId", String(router.query.id));
+    router.push("/rental");
   };
 
   const result = useQuery(
