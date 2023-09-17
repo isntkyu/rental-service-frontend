@@ -23,7 +23,6 @@ import { Spacing, Stack } from "@toss/emotion-utils";
 import { FixedBottom } from "../components/FixedBottom";
 
 async function fakeApi(userType: UserType, userId: number) {
-  s;
   return new Promise<any>((resolve) => {
     setTimeout(() => {
       resolve({
