@@ -17,7 +17,7 @@ import { useRouter } from "next/router";
 
 export default function Rental() {
   const userId = Number(localStorage.getItem("userId"));
-  const [productName, setProductName] = useState<string>("");
+  const [productType, setProductType] = useState<string>("");
   const [serialNumber, setSerialNumber] = useState<string>("");
   const [businessCode, setBusinessCode] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -29,7 +29,7 @@ export default function Rental() {
   const router = useRouter();
 
   const canSubmit =
-    productName !== "" &&
+    productType !== "" &&
     serialNumber.length === 8 &&
     businessCode.length === 5 &&
     password.length > 0 &&
@@ -74,9 +74,9 @@ export default function Rental() {
             <FormLabel>제품선택</FormLabel>
             <RadioGroup
               onChange={(value: string) => {
-                setProductName(value);
+                setProductType(value);
               }}
-              value={productName}
+              value={productType}
             >
               <Stack.Horizontal>
                 <Radio value="유니버셜 프로 & 미니">유니버셜 프로 & 미니</Radio>

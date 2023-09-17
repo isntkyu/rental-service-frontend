@@ -23,19 +23,20 @@ import { Spacing, Stack } from "@toss/emotion-utils";
 import { FixedBottom } from "../components/FixedBottom";
 
 async function fakeApi(userType: UserType, userId: number) {
+  s;
   return new Promise<any>((resolve) => {
     setTimeout(() => {
       resolve({
         email: "azzz@adasd.com",
         businessCode: "123456",
-        businessName: "우철이 렌탈소",
+        businessType: "우철이 렌탈소",
         rentalList: [
           {
             rentalId: 1,
             email: "123@.a2",
             startDate: "2000.12.12", // todo Date formatting
             endDate: "2222.12.12", // Date
-            productName: "유니버셜 라이트",
+            productType: "유니버셜 라이트",
           },
         ],
       });
@@ -90,7 +91,7 @@ function BusinessContent() {
     <div>
       <Heading>사업자</Heading>
       <Spacing size={20} />
-      <Text fontSize="2xl">{result.data.businessName}님, 안녕하세요 !</Text>
+      <Text fontSize="2xl">{result.data.businessType}님, 안녕하세요 !</Text>
 
       <Spacing size={20} />
       <Stack>
