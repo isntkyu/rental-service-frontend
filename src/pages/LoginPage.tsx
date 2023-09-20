@@ -13,34 +13,28 @@ import { ComponentProps, useCallback, useState } from "react";
 import { FixedBottom } from "../components/FixedBottom";
 import { InputLabel } from "../components/InputLabel";
 import { useRouter } from "next/router";
+import api from "../api";
 
-export type UserType = "ADMIN" | "GENERAL" | "BUSINESS";
-
-interface Res {
-  body: {
-    code?: string;
-    userId: number;
-    userType: UserType;
-  };
-}
+export type UserType = "admin" | "general" | "business";
 
 async function fakeApi(id: string, password: string, userType: UserType) {
-  return new Promise<Res>((resolve) => {
-    setTimeout(() => {
-      resolve({
-        body: {
-          userType: userType,
-          userId: 1,
-        },
-      });
-    }, 1000);
-  });
+  try {
+    const res = await api.post("/user/login", {
+      userType: userType,
+      email: id,
+      password: password,
+    });
+    return res.data;
+  } catch (err) {
+    console.error(err);
+    return err;
+  }
 }
 
 export default function LoginPage() {
   const [id, setId] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const [userType, setUserType] = useState<UserType>("GENERAL");
+  const [userType, setUserType] = useState<UserType>("general");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -53,11 +47,11 @@ export default function LoginPage() {
   const handleSubmit = async () => {
     setLoading(true);
     // TODO API Login
-    const res: Res = await fakeApi(id, password, userType);
+    const res = await fakeApi(id, password, userType);
     await delay(500);
     setLoading(false);
 
-    if (res.body.code != null) {
+    if (res.body?.code != null) {
       if (res.body?.code === "Fail") {
         toast({
           title: "아이디/패스워드를 확인해주세요.",
@@ -84,14 +78,14 @@ export default function LoginPage() {
         });
       }
     } else {
-      const userId = res.body.userId;
-      const userType = res.body.userType;
+      const userId = res.userId;
+      const userType = res.userType;
 
-      if (userType === "ADMIN") {
+      if (userType === "admin") {
         router.push(`/admin/${userId}`);
-      } else if (userType === "BUSINESS") {
+      } else if (userType === "business") {
         router.push(`/business/${userId}`);
-      } else if (userType === "GENERAL") {
+      } else if (userType === "general") {
         router.push(`/my-page/${userId}`);
       } else {
         toast({
@@ -119,9 +113,9 @@ export default function LoginPage() {
           value={userType}
         >
           <Stack.Horizontal>
-            <Radio value="GENERAL">사용자</Radio>
-            <Radio value="BUSINESS">사업자</Radio>
-            <Radio value="ADMIN">관리자</Radio>
+            <Radio value="general">사용자</Radio>
+            <Radio value="business">사업자</Radio>
+            <Radio value="admin">관리자</Radio>
           </Stack.Horizontal>
         </RadioGroup>
 

@@ -15,27 +15,16 @@ import { useRouter } from "next/router";
 import { Suspense, useState } from "react";
 import { FixedBottom } from "../components/FixedBottom";
 import { resourceLimits } from "worker_threads";
+import api from "../api";
 
 async function fakeApi(id: number) {
-  return new Promise<any>((resolve) => {
-    setTimeout(() => {
-      resolve({
-        userId: 1,
-        email: "zz@zz",
-        name: "이준규",
-        rentalInfo: null,
-        // rentalInfo: {
-        //   rentalId: 1,
-        //   status: "RENTAL",
-        //   serialNumber: "ABCD_EFBS",
-        //   businessCode: "01234",
-        //   rentalDate: "2023-01-01",
-        //   // returnDate: "2023-01-05",
-        //   // price: 100,
-        // },
-      });
-    }, 1000);
-  });
+  try {
+    const res = await api.get(`/user/general/${id}`);
+    return res.data;
+  } catch (err) {
+    console.error(err);
+    return err;
+  }
 }
 
 export default function MyPage() {
@@ -58,45 +47,52 @@ function MyPageContent() {
   const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [isPayAgree, setIsPayAgree] = useState(false);
+  const [returned, setReturned] = useState(false);
   const router = useRouter();
-  /*
-  상태: 렌탈있음 | 반납하고 결제전 | 렌탈 없음
-  
-  */
+
   const pushRentalPage = () => {
     localStorage.setItem("userId", String(router.query.id));
     router.push("/rental");
   };
 
   const result = useQuery(
-    ["/my-page", "router.query.id"],
+    ["/my-page", router.query.id, returned],
     () => fakeApi(Number(router.query.id)),
     {
       suspense: true,
     }
   );
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     setLoading(true);
-    setTimeout(() => {
-      toast({
-        title: "결제가 완료되었습니다.",
-        description: "",
-        status: "success",
-        duration: 9000,
-        isClosable: true,
-      });
-      setLoading(false);
-    }, 1000);
+
+    await api.post("/rental/payment", {
+      rentalId: result.data.rentalInfo?.rentalId,
+    });
+
+    toast({
+      title: "결제가 완료되었습니다.",
+      description: "",
+      status: "success",
+      duration: 9000,
+      isClosable: true,
+    });
+
+    setReturned(true);
+    result.refetch();
+    setLoading(false);
   };
 
-  const handleReturn = () => {
+  const handleReturn = async () => {
     setLoading(true);
-    setTimeout(() => {
-      // TODO 반납 API 호출
-      result.refetch();
-      setLoading(false);
-    }, 1000);
+    await api.post("/rental/return", {
+      email: result.data.email,
+      password: password,
+      rentalId: result.data.rentalInfo?.rentalId,
+    });
+    setReturned(true);
+    result.refetch();
+    setLoading(false);
   };
 
   return (
@@ -130,7 +126,7 @@ function MyPageContent() {
       <Heading size="sm">렌털정보</Heading>
       <Spacing size={30} />
 
-      {result.data.rentalInfo === null ? (
+      {result.data?.rentalInfo === null ? (
         <div>
           <Text color={"GrayText"} align={"center"}>
             고객님의 렌털 정보를 확인할 수 없습니다.
@@ -147,36 +143,36 @@ function MyPageContent() {
             </Button>
           </FixedBottom>
         </div>
-      ) : result.data.rentalInfo.status === "RETURN" ? (
+      ) : result.data.rentalInfo?.status === 200 ? (
         <div>
           <Stack.Horizontal>
             <FormLabel style={{ minWidth: "66px" }}>시리얼번호</FormLabel>
             {/* <Input value={result.data.email} isDisabled={true} /> */}
-            <Text fontSize={20}>{result.data.rentalInfo.serialNumber}</Text>
+            <Text fontSize={20}>{result.data.rentalInfo?.serialNumber}</Text>
           </Stack.Horizontal>
           <Spacing size={10} />
           <Stack.Horizontal>
             <FormLabel style={{ minWidth: "66px" }}>사업자코드</FormLabel>
             {/* <Input value={result.data.email} isDisabled={true} /> */}
-            <Text fontSize={20}>{result.data.rentalInfo.businessCode}</Text>
+            <Text fontSize={20}>{result.data.rentalInfo?.businessCode}</Text>
           </Stack.Horizontal>
           <Spacing size={10} />
           <Stack.Horizontal>
             <FormLabel style={{ minWidth: "66px" }}>렌털시작일</FormLabel>
             {/* <Input value={result.data.email} isDisabled={true} /> */}
-            <Text fontSize={20}>{result.data.rentalInfo.rentalDate}</Text>
+            <Text fontSize={20}>{result.data.rentalInfo?.rentalDate}</Text>
           </Stack.Horizontal>
           <Spacing size={10} />
           <Stack.Horizontal>
             <FormLabel style={{ minWidth: "66px" }}>렌털반납일</FormLabel>
             {/* <Input value={result.data.email} isDisabled={true} /> */}
-            <Text fontSize={20}>{result.data.rentalInfo.returnDate}</Text>
+            <Text fontSize={20}>{result.data.rentalInfo?.returnDate}</Text>
           </Stack.Horizontal>
           <Spacing size={10} />
           <Stack.Horizontal>
             <FormLabel style={{ minWidth: "66px" }}>최종결제금</FormLabel>
             {/* <Input value={result.data.email} isDisabled={true} /> */}
-            <Text fontSize={20}>${result.data.rentalInfo.price}</Text>
+            <Text fontSize={20}>${result.data.rentalInfo?.price}</Text>
           </Stack.Horizontal>
           <Spacing size={50} />
           <Checkbox
@@ -207,19 +203,19 @@ function MyPageContent() {
           <Stack.Horizontal>
             <FormLabel style={{ minWidth: "66px" }}>시리얼번호</FormLabel>
             {/* <Input value={result.data.email} isDisabled={true} /> */}
-            <Text fontSize={20}>{result.data.rentalInfo.serialNumber}</Text>
+            <Text fontSize={20}>{result.data.rentalInfo?.serialNumber}</Text>
           </Stack.Horizontal>
           <Spacing size={10} />
           <Stack.Horizontal>
             <FormLabel style={{ minWidth: "66px" }}>사업자코드</FormLabel>
             {/* <Input value={result.data.email} isDisabled={true} /> */}
-            <Text fontSize={20}>{result.data.rentalInfo.businessCode}</Text>
+            <Text fontSize={20}>{result.data.rentalInfo?.businessCode}</Text>
           </Stack.Horizontal>
           <Spacing size={10} />
           <Stack.Horizontal>
             <FormLabel style={{ minWidth: "66px" }}>렌털시작일</FormLabel>
             {/* <Input value={result.data.email} isDisabled={true} /> */}
-            <Text fontSize={20}>{result.data.rentalInfo.rentalDate}</Text>
+            <Text fontSize={20}>{result.data.rentalInfo?.rentalDate}</Text>
           </Stack.Horizontal>
           <FixedBottom>
             <Button

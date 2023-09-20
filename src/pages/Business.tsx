@@ -21,26 +21,11 @@ import { useRouter } from "next/router";
 import { useQuery } from "@tanstack/react-query";
 import { Spacing, Stack } from "@toss/emotion-utils";
 import { FixedBottom } from "../components/FixedBottom";
+import api from "../api";
 
 async function fakeApi(userType: UserType, userId: number) {
-  return new Promise<any>((resolve) => {
-    setTimeout(() => {
-      resolve({
-        email: "azzz@adasd.com",
-        businessCode: "123456",
-        businessType: "우철이 렌탈소",
-        rentalList: [
-          {
-            rentalId: 1,
-            email: "123@.a2",
-            startDate: "2000.12.12", // todo Date formatting
-            endDate: "2222.12.12", // Date
-            productType: "유니버셜 라이트",
-          },
-        ],
-      });
-    }, 1000);
-  });
+  const res = await api.get(`/user/business/${userId}`);
+  return res.data;
 }
 
 export default function Business() {
@@ -56,6 +41,8 @@ function BusinessFallback() {
 }
 
 function BusinessContent() {
+  const [settled, setSettled] = useState(false);
+
   const toast = useToast({
     position: "top",
   });
@@ -64,23 +51,27 @@ function BusinessContent() {
 
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setLoading(true);
-    setTimeout(() => {
-      toast({
-        title: "정산이 완료되었습니다.",
-        description: "",
-        status: "success",
-        duration: 9000,
-        isClosable: true,
-      });
-      setLoading(false);
-    }, 2000);
+    // await api.post("/rental/settlement", {
+    //   rentalId: result.data.rentalList.map((rental: any) => {
+    //     return rental.rentalIds;
+    //   }),
+    // });
+    toast({
+      title: "정산이 완료되었습니다.",
+      description: "",
+      status: "success",
+      duration: 9000,
+      isClosable: true,
+    });
+    setSettled(true);
+    setLoading(false);
   };
 
   const result = useQuery(
-    ["/business", router.query.id],
-    () => fakeApi("BUSINESS", Number(router.query.id)),
+    ["/business", router.query.id, settled],
+    () => fakeApi("business", Number(router.query.id)),
     {
       suspense: true,
     }
@@ -90,7 +81,7 @@ function BusinessContent() {
     <div>
       <Heading>사업자</Heading>
       <Spacing size={20} />
-      <Text fontSize="2xl">{result.data.businessType}님, 안녕하세요 !</Text>
+      <Text fontSize="2xl">{result.data.name}님, 안녕하세요 !</Text>
 
       <Spacing size={20} />
       <Stack>
@@ -123,9 +114,9 @@ function BusinessContent() {
           <Tbody>
             {result.data.rentalList.map((item: any) => (
               <Tr key={item.rentalId}>
-                <Td>a</Td>
-                <Td>a</Td>
-                <Td>a</Td>
+                <Td>{item.email}</Td>
+                <Td>{item.rentalPeriod}</Td>
+                <Td>{item.productType}</Td>
               </Tr>
             ))}
           </Tbody>
@@ -141,7 +132,7 @@ function BusinessContent() {
           style={{ width: "100%" }}
           size="lg"
         >
-          정산하기
+          정산받기
         </Button>
       </FixedBottom>
     </div>

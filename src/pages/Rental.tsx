@@ -8,12 +8,14 @@ import {
   Input,
   Radio,
   RadioGroup,
+  useToast,
 } from "@chakra-ui/react";
 import { Spacing, Stack } from "@toss/emotion-utils";
 import { FixedBottom } from "../components/FixedBottom";
 import { useState } from "react";
 import { delay } from "@toss/utils";
 import { useRouter } from "next/router";
+import api from "../api";
 
 export default function Rental() {
   const userId = Number(localStorage.getItem("userId"));
@@ -30,19 +32,39 @@ export default function Rental() {
 
   const canSubmit =
     productType !== "" &&
-    serialNumber.length === 8 &&
+    serialNumber.length === 9 &&
     businessCode.length === 5 &&
     password.length > 0 &&
     isRentalAgree &&
     !loading;
 
+  const toast = useToast();
+
   const handleSubmit = async () => {
     setLoading(true);
-    // TODO API Login
-    // const res: Res = await fakeApi(id, password, userType);
-    await delay(500);
-    setLoading(false);
-    setSuccess(true);
+
+    try {
+      const res = await api.post("/rental", {
+        serialNumber: serialNumber,
+        productType: productType,
+        rentalUserId: userId,
+        businessCode: businessCode,
+        password: password,
+      });
+      setLoading(false);
+      setSuccess(true);
+      return;
+    } catch (err) {
+      toast({
+        title: "정확한 정보를 입력해주세요.",
+        description: "",
+        status: "error",
+        duration: 9000,
+        isClosable: true,
+      });
+      setLoading(false);
+      return err;
+    }
   };
 
   return (

@@ -31,17 +31,12 @@ import { QueryClient, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/router";
 import { FixedBottom } from "../components/FixedBottom";
 import { format } from "date-fns";
+import api from "../api";
 
 async function fakeApi(order: "asc" | "desc", month: string) {
-  return new Promise<string[]>((resolve) => {
-    setTimeout(() => {
-      if (order === "asc") {
-        resolve(["1", "2", "3", "4"]);
-      } else {
-        resolve(["4", "3", "2", "1"]);
-      }
-    }, 1000);
-  });
+  const res = await api.get(`/rental/list?rentalMonth=${month}&order=${order}`);
+
+  return res.data;
 }
 
 export default function Admin() {
@@ -63,7 +58,7 @@ function AdminContent() {
   // const [startDate, setStartDate] = useState<string>("");
   // const [endDate, setEndDate] = useState<string>("");
   const [month, setMonth] = useState<string>(format(new Date(), "yyyy-MM"));
-  // const router = useRouter();
+
   const result = useQuery(
     ["/admin", order, month],
     () => fakeApi(order, month),
@@ -170,11 +165,11 @@ function AdminContent() {
             </Tr>
           </Thead>
           <Tbody>
-            {result.data?.map((x) => (
+            {result.data?.rentalList?.map((x) => (
               <Tr>
-                <Td>a</Td>
-                <Td>a</Td>
-                <Td>a</Td>
+                <Td>{x.email}</Td>
+                <Td>{x.rentalPeriod}</Td>
+                <Td>{x.productType}</Td>
               </Tr>
             ))}
           </Tbody>
@@ -183,12 +178,14 @@ function AdminContent() {
 
       <Spacing size={50} />
       <Heading size="md" textAlign="center">
-        {pickMonth(month)}월 총 렌털 비용: ${0}
+        {pickMonth(month)}월 총 렌털 비용: ${result.data.totalPrice}
       </Heading>
 
       <FixedBottom>
         <Button
-          isDisabled={result.data == null || result.data?.length === 0}
+          isDisabled={
+            result.data == null || result.data?.rentalList?.length === 0
+          }
           colorScheme="blue"
           isLoading={loading}
           onClick={handleSubmit}
