@@ -190,6 +190,7 @@ function MyPageContent() {
             <Button
               isLoading={loading}
               colorScheme="blue"
+              isDisabled={!isPayAgree}
               onClick={handlePayment}
               style={{ width: "100%" }}
               size="lg"

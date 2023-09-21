@@ -165,7 +165,7 @@ function AdminContent() {
             </Tr>
           </Thead>
           <Tbody>
-            {result.data?.rentalList?.map((x) => (
+            {result.data?.rentalList?.map((x: any) => (
               <Tr>
                 <Td>{x.email}</Td>
                 <Td>{x.rentalPeriod}</Td>
