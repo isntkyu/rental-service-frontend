@@ -22,6 +22,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Spacing, Stack } from "@toss/emotion-utils";
 import { FixedBottom } from "../components/FixedBottom";
 import api from "../api";
+import { usePathname } from 'next/navigation'
 
 async function fakeApi(userType: UserType, userId: number) {
   const res = await api.get(`/user/business/${userId}`);
@@ -48,6 +49,7 @@ function BusinessContent() {
   });
 
   const router = useRouter();
+  const pathname = usePathname();
 
   const [loading, setLoading] = useState(false);
 
@@ -70,8 +72,8 @@ function BusinessContent() {
   };
 
   const result = useQuery(
-    ["/business", router.query.id, settled],
-    () => fakeApi("business", Number(router.query.id)),
+    ["/business", pathname?.split('/')[2], settled],
+    () => fakeApi("business", Number(pathname?.split('/')[2])),
     {
       suspense: true,
     }

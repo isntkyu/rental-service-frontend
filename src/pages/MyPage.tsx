@@ -14,8 +14,8 @@ import { Spacing, Stack } from "@toss/emotion-utils";
 import { useRouter } from "next/router";
 import { Suspense, useState } from "react";
 import { FixedBottom } from "../components/FixedBottom";
-import { resourceLimits } from "worker_threads";
 import api from "../api";
+import { usePathname } from 'next/navigation'
 
 async function fakeApi(id: number) {
   try {
@@ -49,15 +49,16 @@ function MyPageContent() {
   const [isPayAgree, setIsPayAgree] = useState(false);
   const [returned, setReturned] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
 
   const pushRentalPage = () => {
-    localStorage.setItem("userId", String(router.query.id));
+    localStorage.setItem("userId", String(pathname?.split('/')[2]));
     router.push("/rental");
   };
 
   const result = useQuery(
-    ["/my-page", router.query.id, returned],
-    () => fakeApi(Number(router.query.id)),
+    ["/my-page", pathname?.split('/')[2], returned],
+    () => fakeApi(Number(pathname?.split('/')[2])),
     {
       suspense: true,
     }
