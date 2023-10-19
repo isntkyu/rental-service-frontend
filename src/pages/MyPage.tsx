@@ -15,7 +15,7 @@ import { useRouter } from "next/router";
 import { Suspense, useState } from "react";
 import { FixedBottom } from "../components/FixedBottom";
 import api from "../api";
-import { usePathname } from 'next/navigation'
+import { usePathname } from "next/navigation";
 
 async function fakeApi(id: number) {
   try {
@@ -48,17 +48,18 @@ function MyPageContent() {
   const [loading, setLoading] = useState(false);
   const [isPayAgree, setIsPayAgree] = useState(false);
   const [returned, setReturned] = useState(false);
+  const [depositer, setDepositer] = useState<string>("");
   const router = useRouter();
   const pathname = usePathname();
 
   const pushRentalPage = () => {
-    localStorage.setItem("userId", String(pathname?.split('/')[2]));
+    localStorage.setItem("userId", String(pathname?.split("/")[2]));
     router.push("/rental");
   };
 
   const result = useQuery(
-    ["/my-page", pathname?.split('/')[2], returned],
-    () => fakeApi(Number(pathname?.split('/')[2])),
+    ["/my-page", pathname?.split("/")[2], returned],
+    () => fakeApi(Number(pathname?.split("/")[2])),
     {
       suspense: true,
     }
@@ -69,10 +70,11 @@ function MyPageContent() {
 
     await api.post("/rental/payment", {
       rentalId: result.data.rentalInfo?.rentalId,
+      depositer: depositer,
     });
 
     toast({
-      title: "결제가 완료되었습니다.",
+      title: "입금완료 요청이 되었습니다.",
       description: "",
       status: "success",
       duration: 9000,
@@ -86,11 +88,49 @@ function MyPageContent() {
 
   const handleReturn = async () => {
     setLoading(true);
-    await api.post("/rental/return", {
-      email: result.data.email,
-      password: password,
+    try {
+      await api.post("/rental/return", {
+        email: result.data.email,
+        password: password,
+        rentalId: result.data.rentalInfo?.rentalId,
+      });
+      setReturned(true);
+      toast({
+        title: "반납신청이 완료되었습니다.",
+        description: "",
+        status: "success",
+        duration: 9000,
+        isClosable: true,
+      });
+      result.refetch();
+      setLoading(false);
+    } catch (err) {
+      toast({
+        title: "앱에서 기기 해제를 먼저 진행해주세요.",
+        description: "",
+        status: "error",
+        duration: 9000,
+        isClosable: true,
+      });
+      setLoading(false);
+    }
+  };
+
+  const handleFinishRental = async () => {
+    setLoading(true);
+
+    await api.post("/rental/finish", {
       rentalId: result.data.rentalInfo?.rentalId,
     });
+
+    toast({
+      title: "최종반납이 완료되었습니다.",
+      description: "",
+      status: "success",
+      duration: 9000,
+      isClosable: true,
+    });
+
     setReturned(true);
     result.refetch();
     setLoading(false);
@@ -144,7 +184,8 @@ function MyPageContent() {
             </Button>
           </FixedBottom>
         </div>
-      ) : result.data.rentalInfo?.status === 200 ? (
+      ) : result.data.rentalInfo?.status === 201 ||
+        result.data.rentalInfo?.status === 200 ? (
         <div>
           <Stack.Horizontal>
             <FormLabel style={{ minWidth: "66px" }}>시리얼번호</FormLabel>
@@ -175,7 +216,39 @@ function MyPageContent() {
             {/* <Input value={result.data.email} isDisabled={true} /> */}
             <Text fontSize={20}>${result.data.rentalInfo?.price}</Text>
           </Stack.Horizontal>
-          <Spacing size={50} />
+
+          <Spacing size={40} />
+          <Heading size="sm">결제정보</Heading>
+          <Spacing size={30} />
+          <Stack.Horizontal>
+            <FormLabel style={{ minWidth: "66px" }}>예금주</FormLabel>
+            {/* <Input value={result.data.email} isDisabled={true} /> */}
+            <Text fontSize={20}>이준규</Text>
+          </Stack.Horizontal>
+          <Spacing size={10} />
+          <Stack.Horizontal>
+            <FormLabel style={{ minWidth: "66px" }}>계좌번호</FormLabel>
+            {/* <Input value={result.data.email} isDisabled={true} /> */}
+            <Text fontSize={20}>92883-2883-199</Text>
+          </Stack.Horizontal>
+          <Spacing size={10} />
+          <Stack.Horizontal>
+            <FormLabel style={{ minWidth: "66px" }}>은행명</FormLabel>
+            {/* <Input value={result.data.email} isDisabled={true} /> */}
+            <Text fontSize={20}>국민은행</Text>
+          </Stack.Horizontal>
+          <Spacing size={10} />
+          <Stack.Horizontal>
+            <FormLabel style={{ minWidth: "66px" }}>입금자명</FormLabel>
+            <Input
+              value={depositer}
+              onChange={(e) => setDepositer(e.target.value)}
+              placeholder="입금하실 성함을 입력해주세요."
+            />
+            <Button onClick={handlePayment}>입금완료</Button>
+          </Stack.Horizontal>
+
+          <Spacing size={40} />
           <Checkbox
             colorScheme="blue"
             isChecked={isPayAgree}
@@ -191,12 +264,12 @@ function MyPageContent() {
             <Button
               isLoading={loading}
               colorScheme="blue"
-              isDisabled={!isPayAgree}
-              onClick={handlePayment}
+              isDisabled={!isPayAgree || result.data.rentalInfo.status !== 200}
+              onClick={handleFinishRental}
               style={{ width: "100%" }}
               size="lg"
             >
-              결제하기
+              반납완료
             </Button>
           </FixedBottom>
         </div>
@@ -227,7 +300,7 @@ function MyPageContent() {
               style={{ width: "100%" }}
               size="lg"
             >
-              반납하기
+              반납신청하기
             </Button>
           </FixedBottom>
         </div>

@@ -13,7 +13,6 @@ import {
 import { Spacing, Stack } from "@toss/emotion-utils";
 import { FixedBottom } from "../components/FixedBottom";
 import { useState } from "react";
-import { delay } from "@toss/utils";
 import { useRouter } from "next/router";
 import api from "../api";
 
@@ -32,13 +31,15 @@ export default function Rental() {
 
   const canSubmit =
     productType !== "" &&
-    serialNumber.length === 9 &&
+    serialNumber.length === 8 &&
     businessCode.length === 5 &&
     password.length > 0 &&
     isRentalAgree &&
     !loading;
 
-  const toast = useToast();
+  const toast = useToast({
+    position: "top",
+  });
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -51,10 +52,29 @@ export default function Rental() {
         businessCode: businessCode,
         password: password,
       });
+      toast({
+        title: "등록된 시리얼번호 조회에 성공했습니다.",
+        description: "",
+        status: "success",
+        duration: 9000,
+        isClosable: true,
+      });
       setLoading(false);
       setSuccess(true);
       return;
     } catch (err) {
+      console.log(err);
+      if (err?.response?.data?.statusCode === 400) {
+        toast({
+          title: err?.response?.data?.message,
+          description: "",
+          status: "error",
+          duration: 9000,
+          isClosable: true,
+        });
+        setLoading(false);
+        return err;
+      }
       toast({
         title: "정확한 정보를 입력해주세요.",
         description: "",
@@ -72,10 +92,10 @@ export default function Rental() {
       <Heading>렌털하기</Heading>
       <Spacing size={24} />
 
-      <Text fontSize="2xl">완료되었습니다.</Text>
       <Spacing size={20} />
       {success ? (
         <div>
+          <Text fontSize="2xl">완료되었습니다.</Text>
           <FixedBottom>
             <Button
               isLoading={loading}

@@ -25,6 +25,9 @@ import {
   TableContainer,
   Center,
 } from "@chakra-ui/react";
+import * as ExcelJS from "exceljs";
+import * as XLSX from "xlsx";
+
 import { Spacing, Stack } from "@toss/emotion-utils";
 import { Suspense, useEffect, useState } from "react";
 import { QueryClient, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -33,8 +36,14 @@ import { FixedBottom } from "../components/FixedBottom";
 import { format } from "date-fns";
 import api from "../api";
 
-async function fakeApi(order: "asc" | "desc", month: string) {
-  const res = await api.get(`/rental/list?rentalMonth=${month}&order=${order}`);
+async function fakeApi(
+  order: "asc" | "desc",
+  month: string,
+  searchBusinessName: string
+) {
+  const res = await api.get(
+    `/rental/list?rentalMonth=${month}&order=${order}&searchBusinessName=${searchBusinessName}`
+  );
 
   return res.data;
 }
@@ -57,11 +66,12 @@ function AdminContent() {
   const [loading, setLoading] = useState(false);
   // const [startDate, setStartDate] = useState<string>("");
   // const [endDate, setEndDate] = useState<string>("");
+  const [searchBusinessName, setSearchBusinessName] = useState<string>("");
   const [month, setMonth] = useState<string>(format(new Date(), "yyyy-MM"));
 
   const result = useQuery(
     ["/admin", order, month],
-    () => fakeApi(order, month),
+    () => fakeApi(order, month, searchBusinessName),
     {
       suspense: true,
     }
@@ -83,6 +93,43 @@ function AdminContent() {
       });
       setLoading(false);
     }, 2000);
+  };
+
+  const downloadExcel = async () => {
+    if (result.data.rentalList.length <= 0) return;
+    const dataUrl = convertJsonToXlsx(
+      result.data.rentalList.map((item: any) => {
+        return {
+          렌털번호: item.rentalId,
+          이메일: item.email,
+          렌털기간: item.rentalPeriod,
+          기기: item.productType,
+          입급자명: item.depositer,
+          사업자코드: item.businessCode,
+          사업자명: item.businessName,
+          상태: item.status,
+        };
+      })
+    );
+    const link = document.createElement("a");
+    link.href = dataUrl;
+    link.download = `렌털내역_${result.data.rentalList[0].businessName}.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const convertJsonToXlsx = (jsonData: any) => {
+    const worksheet = XLSX.utils.json_to_sheet(jsonData);
+    const workbook = { Sheets: { data: worksheet }, SheetNames: ["data"] };
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+    const data = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    return URL.createObjectURL(data);
   };
 
   const pickMonth = (month: string) => {
@@ -129,6 +176,17 @@ function AdminContent() {
                 result.refetch();
               }}
             />
+            <Input
+              width={320}
+              placeholder="사업자명을 검색해주세요 (Enter)"
+              value={searchBusinessName}
+              onChange={(e) => setSearchBusinessName(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === "Enter") {
+                  result.refetch();
+                }
+              }}
+            ></Input>
           </Stack.Horizontal>
         </div>
       </Stack>
@@ -148,6 +206,14 @@ function AdminContent() {
 
       <Heading>{pickMonth(month)}월 렌털 내역</Heading>
       <Spacing size={20} />
+      <Button
+        colorScheme="green"
+        isLoading={loading}
+        onClick={() => downloadExcel()}
+      >
+        엑셀다운로드
+      </Button>
+      <Spacing size={20} />
 
       {/* <OrderedList>
         {result.data?.map((x) => (
@@ -161,6 +227,9 @@ function AdminContent() {
             <Tr>
               <Th>사용자</Th>
               <Th>렌털 기간</Th>
+              <Th>상태</Th>
+              <Th>사업자명</Th>
+              <Th>사업자코드</Th>
               <Th>제품명</Th>
             </Tr>
           </Thead>
@@ -169,6 +238,9 @@ function AdminContent() {
               <Tr>
                 <Td>{x.email}</Td>
                 <Td>{x.rentalPeriod}</Td>
+                <Td>{x.status}</Td>
+                <Td>{x.businessName}</Td>
+                <Td>{x.businessCode}</Td>
                 <Td>{x.productType}</Td>
               </Tr>
             ))}

@@ -22,7 +22,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Spacing, Stack } from "@toss/emotion-utils";
 import { FixedBottom } from "../components/FixedBottom";
 import api from "../api";
-import { usePathname } from 'next/navigation'
+import { usePathname } from "next/navigation";
 
 async function fakeApi(userType: UserType, userId: number) {
   const res = await api.get(`/user/business/${userId}`);
@@ -72,12 +72,30 @@ function BusinessContent() {
   };
 
   const result = useQuery(
-    ["/business", pathname?.split('/')[2], settled],
-    () => fakeApi("business", Number(pathname?.split('/')[2])),
+    ["/business", pathname?.split("/")[2], settled],
+    () => fakeApi("business", Number(pathname?.split("/")[2])),
     {
       suspense: true,
     }
   );
+
+  const handleApprove = async (rentalId: any) => {
+    // setLoading(true);
+    const res = await api.post("/rental/return/approve", {
+      rentalId: rentalId,
+    });
+
+    toast({
+      title: "반납승인이 완료되었습니다.",
+      description: "",
+      status: "success",
+      duration: 9000,
+      isClosable: true,
+    });
+    result.refetch();
+
+    // setLoading(false);
+  };
 
   return (
     <div>
@@ -111,6 +129,9 @@ function BusinessContent() {
               <Th>사용자</Th>
               <Th>렌털 기간</Th>
               <Th>제품명</Th>
+              <Th>상태</Th>
+              <Th>입금자명</Th>
+              <Th>반납승인</Th>
             </Tr>
           </Thead>
           <Tbody>
@@ -119,6 +140,17 @@ function BusinessContent() {
                 <Td>{item.email}</Td>
                 <Td>{item.rentalPeriod}</Td>
                 <Td>{item.productType}</Td>
+                <Td>{item.status}</Td>
+                <Td>{item.depositer}</Td>
+                <Td>
+                  <Button
+                    isDisabled={item.status !== "반납신청"}
+                    isLoading={loading}
+                    onClick={() => handleApprove(item.rentalId)}
+                  >
+                    반납승인
+                  </Button>
+                </Td>
               </Tr>
             ))}
           </Tbody>
